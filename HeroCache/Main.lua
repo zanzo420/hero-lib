@@ -19,7 +19,6 @@ HeroCache = Cache;
 -- Temporary
 Cache.APLVar = {};
 Cache.Enemies = {};
-Cache.EnemiesCount = {};
 Cache.GUIDInfo = {};
 Cache.MiscInfo = {};
 Cache.SpellInfo = {};
@@ -47,7 +46,6 @@ function Cache.Reset()
 
     wipe(Cache.APLVar);
     wipe(Cache.Enemies);
-    wipe(Cache.EnemiesCount);
     wipe(Cache.GUIDInfo);
     wipe(Cache.MiscInfo);
     wipe(Cache.SpellInfo);
@@ -269,16 +267,4 @@ end
 -- Typical usage is : return Cache.Set("SpellInfo", 53, "CostInfo", GetSpellPowerCost(53)[1]);
 function Cache.Set(...)
   return HeroCacheDB.Enabled and CacheImpl.Set(...) or select(select('#', ...), ...)
-end
-
--- Wipe a table while keeping the structure
--- i.e. wipe every sub-table as long it doesn't contain a table
-function Cache.WipeTableRecursively(Table)
-  for Key, Value in pairs(Table) do
-    if type(Value) == "table" then
-      Cache.WipeTableRecursively(Value);
-    else
-      wipe(Table);
-    end
-  end
 end

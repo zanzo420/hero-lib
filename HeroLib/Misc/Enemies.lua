@@ -22,22 +22,39 @@ local UnitIDs = {
   "Nameplate"
 }
 
-
 --- ============================ CONTENT ============================
--- Fill the Enemies Cache table.
-function HL.GetEnemies(Distance, AoESpell)
-  local DistanceType, Identifier = type(Distance), nil
-  -- Regular ranged distance check through IsItemInRange & Special distance check (like melee)
-  if DistanceType == "number" or (DistanceType == "string" and Distance == 'Melee') then
-    Identifier = Distance
+-- Init the tables that will contain our methods
+HL.Enemies = {}
+
+local function GeneratePlayerIdentifier (Distance, AoERange)
+  local DistanceType, AoERangeType = type(Distance), type(AoERangeType)
+  -- Makes sure AoERange is used only with distance number
+  if AoERangeType == "boolean" and DistanceType ~= "number" then
+    error("Cannot use AoERange argument if the Distance is not a number.")
+  end
+  -- Regular ranged distance check through IsItemInRange &
+  if DistanceType == "number" then
+    assert(Distance <= 100 or Distance > 0, "Distance must be between 1 and 100.")
+    return Distance
+  -- Special distance check (like melee)
+  elseif DistanceType == "string" then
+    assert(Distance == "Melee", "The only string distance supported is 'Melee'")
+    return Distance
     -- Distance check through IsSpellInRange (works only for targeted spells only)
   elseif DistanceType == "table" then
-    Identifier = tostring(Distance:ID())
+    return tostring(Distance:ID())
   else
     error("Invalid Distance.")
   end
+end
+
+-- Get the enemies from a given distance from the player
+function HL.Enemies.Player(Distance, AoERange)
+  local Identifier = GeneratePlayerIdentifier(Distance, AoERange)
+
   -- Prevent building the same table if it's already cached.
-  if Enemies[Identifier] then return end
+  if Enemies[Identifier] then return Enemies[Identifier] end
+
   -- Init the Variables used to build the table.
   local EnemiesTable = {}
   Enemies[Identifier] = EnemiesTable
@@ -55,7 +72,7 @@ function HL.GetEnemies(Distance, AoESpell)
         tablesort(DistanceValues, Utils.SortASC)
       end
       for Key, Unit in pairs(Enemies[DistanceValues[1]]) do
-        if Unit:IsInRange(Distance, AoESpell) then
+        if Unit:IsInRange(Distance, AoERange) then
           tableinsert(EnemiesTable, Unit)
         end
       end
@@ -69,14 +86,17 @@ function HL.GetEnemies(Distance, AoESpell)
     local Units = Unit[UnitID]
     for _, ThisUnit in pairs(Units) do
       local GUID = ThisUnit:GUID()
-      if not InsertedUnits[GUID] and ThisUnit:Exists() and not ThisUnit:IsBlacklisted()
-        and not ThisUnit:IsUserBlacklisted() and not ThisUnit:IsDeadOrGhost() and Player:CanAttack(ThisUnit)
-        and ThisUnit:IsInRange(Distance, AoESpell) then
+      if not InsertedUnits[GUID] and ThisUnit:Exists() and not ThisUnit:IsBlacklisted() and not ThisUnit:IsUserBlacklisted()
+        and not ThisUnit:IsDeadOrGhost() and Player:CanAttack(ThisUnit) and ThisUnit:IsInRange(Distance, AoERange) then
         tableinsert(EnemiesTable, ThisUnit)
         InsertedUnits[GUID] = true
       end
     end
   end
-  -- Cache the count of enemies
-  Cache.EnemiesCount[Identifier] = #EnemiesTable
+
+  return EnemiesTable
+end
+
+function HL.Enemies.Pet(PetSpell)
+  -- TODO
 end
