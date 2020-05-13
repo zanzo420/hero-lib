@@ -386,6 +386,12 @@ HL:RegisterForEvent(function(Event, Arg1)
    or PrevSpec ~= Cache.Persistent.Player.Spec[1] then
    Spell:AzeriteScan()
   end
+  if Event == "PLAYER_LOGIN"
+   or Event == "AZERITE_ESSENCE_CHANGED"
+   or Event == "AZERITE_ESSENCE_ACTIVATED"
+   or PrevSpec ~= Cache.Persistent.Player.Spec[1] then
+   Spell:AzeriteEssenceScan()
+  end
 
   -- Load / Refresh Core Overrides
   if Event == "PLAYER_LOGIN" then
@@ -406,7 +412,7 @@ HL:RegisterForEvent(function(Event, Arg1)
     end
     UpdateOverrides()
   end
-end, "ZONE_CHANGED_NEW_AREA", "PLAYER_SPECIALIZATION_CHANGED", "PLAYER_TALENT_UPDATE", "PLAYER_EQUIPMENT_CHANGED", "PLAYER_LOGIN")
+end, "ZONE_CHANGED_NEW_AREA", "PLAYER_SPECIALIZATION_CHANGED", "PLAYER_TALENT_UPDATE", "PLAYER_EQUIPMENT_CHANGED", "PLAYER_LOGIN", "AZERITE_ESSENCE_ACTIVATED", "AZERITE_ESSENCE_CHANGED")
 
 -- Spell Book Scanner
 -- Checks the same event as Blizzard Spell Book, from SpellBookFrame_OnLoad in SpellBookFrame.lua
@@ -532,16 +538,24 @@ end
 --- ======= COMBATLOG =======
 --- Combat Log Arguments
 ------- Base -------
--- 1        2         3           4           5           6              7             8         9        10           11
+-- 1          2      3           4           5           6            7                8         9         10         11
 -- TimeStamp, Event, HideCaster, SourceGUID, SourceName, SourceFlags, SourceRaidFlags, DestGUID, DestName, DestFlags, DestRaidFlags
 
 ------- Prefixes -------
 --- SWING
 -- N/A
 
---- SPELL & SPELL_PACIODIC
+--- SPELL & SPELL_PERIODIC
 -- 12        13          14
 -- SpellID, SpellName, SpellSchool
+
+--- SPELL_ABSORBED* - When absorbed damage originated from a spell, will have additional 3 columns with spell info.
+-- 12                13                14                 15                     16       17         18           19
+-- AbsorbSourceGUID, AbsorbSourceName, AbsorbSourceFlags, AbsorbSourceRaidFlags, SpellID, SpellName, SpellSchool, Amount
+
+--- SPELL_ABSORBED
+-- 12             13               14                 15                16                17                 18                     19       20         21           22
+-- AbsorbSpellId, AbsorbSpellName, AbsorbSpellSchool, AbsorbSourceGUID, AbsorbSourceName, AbsorbSourceFlags, AbsorbSourceRaidFlags, SpellID, SpellName, SpellSchool, Amount
 
 ------- Suffixes -------
 --- _CAST_START & _CAST_SUCCESS & _SUMMON & _RESURRECT
@@ -556,23 +570,23 @@ end
 -- AuraType
 
 --- _AURA_APPLIED_DOSE
--- 15       16
+-- 15        16
 -- AuraType, Charges
 
 --- _INTERRUPT
--- 15            16             17
+-- 15            16              17
 -- ExtraSpellID, ExtraSpellName, ExtraSchool
 
 --- _HEAL
--- 15         16         17        18
+-- 15      16           17        18
 -- Amount, Overhealing, Absorbed, Critical
 
 --- _DAMAGE
--- 15       16       17       18        19       20        21        22        23
+-- 15      16        17      18        19       20        21        22        23
 -- Amount, Overkill, School, Resisted, Blocked, Absorbed, Critical, Glancing, Crushing
 
 --- _MISSED
--- 15        16           17
+-- 15        16         17
 -- MissType, IsOffHand, AmountMissed
 
 ------- Special -------

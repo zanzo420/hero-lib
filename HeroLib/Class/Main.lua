@@ -8,6 +8,7 @@ local Cache = HeroCache
 local error = error
 local setmetatable = setmetatable
 local stringformat = string.format
+local tableinsert = table.insert
 -- File Locals
 
 
@@ -40,7 +41,31 @@ do
     self:Init()
   end
 
+  local UnitGUIDMap = {}
+  HL.UnitGUIDMap = UnitGUIDMap
+  function Unit:RemoveUnitGUIDMapEntry()
+    if UnitGUIDMap[self.UnitGUID] and UnitGUIDMap[self.UnitGUID][self.UnitID] then
+      UnitGUIDMap[self.UnitGUID][self.UnitID] = nil;
+      if next(UnitGUIDMap[self.UnitGUID]) == nil then
+        UnitGUIDMap[self.UnitGUID] = nil
+      end
+    end
+  end
+
+  function Unit:AddUnitGUIDMapEntry()
+    if not self.UnitGUID or not self.UnitID then
+      return
+    end
+    if not UnitGUIDMap[self.UnitGUID] then
+      UnitGUIDMap[self.UnitGUID] = {}
+    end
+    if not UnitGUIDMap[self.UnitGUID][self.UnitID] then
+      UnitGUIDMap[self.UnitGUID][self.UnitID] = self
+    end
+  end
+
   function Unit:Init()
+    self:RemoveUnitGUIDMapEntry()
     self.UnitExists = false
     self.UnitGUID = nil
     self.UnitNPCID = nil
@@ -90,6 +115,33 @@ do
     self.LastHitTime = 0
     self.LastAppliedOnPlayerTime = 0
     self.LastRemovedFromPlayerTime = 0
+  end
+end
+
+do
+  local MultiSpell = Class()
+  HL.MultiSpell = MultiSpell
+  function MultiSpell:New(...)
+    local Arg = {...}
+    self.SpellTable = {}
+    for _, Spell in pairs(Arg) do
+      if type(Spell) == "number" then
+        Spell = HL.Spell(Spell)
+      end
+      if type(Spell.SpellID) ~= "number" then error("Invalid SpellID.") end
+      tableinsert(self.SpellTable, Spell)
+    end
+    function MultiSpell:Update()
+      for i, Spell in pairs(self.SpellTable) do
+        if Spell:IsLearned() or (i == #self.SpellTable) then
+          Spell.Update = self.Update
+          setmetatable(self, {__index = Spell})
+          break
+        end
+      end
+    end
+    self:AddToMultiSpells()
+    self:Update()
   end
 end
 

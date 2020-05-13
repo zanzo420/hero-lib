@@ -1,8 +1,8 @@
-## Interface: 80100
+## Interface: 80300
 
 ## Title: Hero|cFFA330C9Lib|r
 ## Author: HeroTC, Aethys
-## Version: 8.0.1.10
+## Version: 8.3.0.00
 ## Notes: Core Library used by HeroTC Addons. Can be used by others 3rd-Party Addons.
 
 ## DefaultState: Enabled
@@ -27,6 +27,7 @@ Core.lua
 Deprecated.lua
 
 # Enum
+Enum\AzeriteEssences.lua
 Enum\ItemRange.lua
 Enum\ProjectileSpeed.lua
 Enum\TriggerGCD.lua
@@ -62,7 +63,6 @@ Class\Item.lua
 
 # Misc
 Misc\ToSort.lua
-Misc\Enemies.lua
 
 # Events
 Events\Main.lua
@@ -71,5 +71,9 @@ Events\PMultiplier.lua
 Events\Prev_Spell.lua
 Events\KeyBinding.lua
 Events\InFlight.lua
+Events\Aura.lua
+
+# Enemy Tracking
+Misc\Enemies.lua
 
 Main.lua

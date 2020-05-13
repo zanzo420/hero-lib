@@ -17,17 +17,25 @@ local select = select
 -- File Locals
 
 
-
 --- ============================ CONTENT ============================
 -- Save the current player's equipment.
 HL.Equipment = {}
 function HL.GetEquipment()
-  local Item
+  local ItemID
+  HL.Equipment = {}
+  HL.OnUseTrinkets = {}
+
   for i = 1, 19 do
-    Item = select(1, GetInventoryItemID("player", i))
+    ItemID = select(1, GetInventoryItemID("player", i))
     -- If there is an item in that slot
-    if Item ~= nil then
-      HL.Equipment[i] = Item
+    if ItemID ~= nil then
+      HL.Equipment[i] = ItemID
+      if (i == 13 or i == 14) then
+        local TrinketItem = HL.Item(ItemID, {i})
+        if TrinketItem:IsUsable() then
+          table.insert(HL.OnUseTrinkets, TrinketItem)
+        end
+      end
     end
   end
 end
@@ -117,10 +125,10 @@ function HL.HasTier(Tier)
   -- Check gear
   if HasTierSets[Tier][Cache.Persistent.Player.Class[3]] then
     local Count = 0
-    local Item
+    local SlotItem
     for Slot, ItemID in pairs(HasTierSets[Tier][Cache.Persistent.Player.Class[3]]) do
-      Item = HL.Equipment[Slot]
-      if Item and Item == ItemID then
+      SlotItem = HL.Equipment[Slot]
+      if SlotItem and SlotItem == ItemID then
         Count = Count + 1
       end
     end
@@ -128,4 +136,37 @@ function HL.HasTier(Tier)
   else
     return false
   end
+end
+
+-- Check if the trinket is coded as blacklisted by the user or not.
+local function IsUserTrinketBlacklisted(TrinketItem)
+  if not TrinketItem then return false end
+  if HL.GUISettings.General.Blacklist.TrinketUserDefined[TrinketItem:ID()] then
+    if type(HL.GUISettings.General.Blacklist.TrinketUserDefined[TrinketItem:ID()]) == "boolean" then
+      return true
+    else
+      return HL.GUISettings.General.Blacklist.TrinketUserDefined[TrinketItem:ID()](TrinketItem)
+    end
+  end
+  return false
+end
+
+-- Function to be called against SimC's use_items
+function HL.UseTrinkets(ExcludedTrinkets)
+  for _, TrinketItem in ipairs(HL.OnUseTrinkets) do
+  local isExcluded = false
+    -- Check if the trinket is ready, unless it's blacklisted
+    if TrinketItem:IsReady() and not IsUserTrinketBlacklisted(TrinketItem) then
+      for i=1,#ExcludedTrinkets do
+        if (ExcludedTrinkets[i] == TrinketItem:ID()) then
+          isExcluded = true
+          break
+        end
+      end
+      if (not isExcluded) then
+        return TrinketItem
+      end
+    end
+  end
+  return nil
 end
